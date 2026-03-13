@@ -59,9 +59,12 @@ function PropertiesContent() {
   // Sheet height percentages
   const sheetHeight = sheetState === 'full' ? '92vh' : sheetState === 'half' ? '55vh' : '18vh';
 
-  // Touch handlers for drag
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Touch handlers for drag — works on handle AND sheet when scrolled to top
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
+    dragCurrentY.current = e.touches[0].clientY;
     isDragging.current = true;
   }, []);
 
@@ -86,6 +89,29 @@ function PropertiesContent() {
       else if (sheetState === 'half') setSheetState('collapsed');
     }
   }, [sheetState]);
+
+  // Sheet body touch: only trigger sheet drag when scrolled to top
+  const handleSheetTouchStart = useCallback((e: React.TouchEvent) => {
+    const scrollEl = scrollContainerRef.current;
+    // Only capture drag if scrolled to top (or nearly top)
+    if (scrollEl && scrollEl.scrollTop <= 5) {
+      dragStartY.current = e.touches[0].clientY;
+      dragCurrentY.current = e.touches[0].clientY;
+      isDragging.current = true;
+    } else {
+      isDragging.current = false;
+    }
+  }, []);
+
+  const handleSheetTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    dragCurrentY.current = e.touches[0].clientY;
+    const diff = dragStartY.current - dragCurrentY.current;
+    // If swiping down and at top of scroll, prevent scroll and prepare to collapse
+    if (diff < -10) {
+      e.preventDefault();
+    }
+  }, []);
 
   // Desktop marker click
   const handleMarkerClickDesktop = useCallback((id: string) => {
@@ -273,8 +299,14 @@ function PropertiesContent() {
             </p>
           </div>
 
-          {/* Scrollable Cards */}
-          <div className="flex-1 overflow-y-auto px-4 pb-8">
+          {/* Scrollable Cards — swipe down collapses sheet when at top */}
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-4 pb-8"
+            onTouchStart={handleSheetTouchStart}
+            onTouchMove={handleSheetTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="space-y-4">
               {filteredProperties.map((property) => (
                 <Link
