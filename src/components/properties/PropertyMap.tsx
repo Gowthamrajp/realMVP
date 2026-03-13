@@ -12,6 +12,7 @@ interface PropertyMapProps {
   onMarkerClick?: (id: string) => void;
   center?: [number, number];
   zoom?: number;
+  visible?: boolean;
 }
 
 export default function PropertyMap({
@@ -20,10 +21,27 @@ export default function PropertyMap({
   onMarkerClick,
   center = [20.5937, 78.9629],
   zoom = 5,
+  visible = true,
 }: PropertyMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+
+  // Invalidate map size and re-fit bounds when visibility changes
+  useEffect(() => {
+    if (visible && mapRef.current) {
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+        // Re-fit bounds to show all markers properly
+        if (properties.length > 0) {
+          const bounds = L.latLngBounds(
+            properties.map((p) => [p.latitude, p.longitude])
+          );
+          mapRef.current?.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+        }
+      }, 150);
+    }
+  }, [visible, properties]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -49,7 +67,10 @@ export default function PropertyMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update markers when properties change
+  // Track if initial bounds have been set
+  const initialBoundsSet = useRef(false);
+
+  // Create/update markers when properties change (NOT on activeId change)
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -60,11 +81,10 @@ export default function PropertyMap({
     // Add new markers
     properties.forEach((property) => {
       const priceText = formatPrice(property.price, property.listing_type);
-      const isActive = activeId === property.id;
 
       const icon = L.divIcon({
         className: 'custom-marker',
-        html: `<div class="price-marker ${isActive ? 'active' : ''}">${priceText}</div>`,
+        html: `<div class="price-marker">${priceText}</div>`,
         iconSize: [0, 0],
         iconAnchor: [40, 20],
       });
@@ -86,16 +106,17 @@ export default function PropertyMap({
       markersRef.current.set(property.id, marker);
     });
 
-    // Fit bounds if we have properties
-    if (properties.length > 0) {
+    // Only fit bounds on first load or when properties list changes
+    if (properties.length > 0 && !initialBoundsSet.current) {
       const bounds = L.latLngBounds(
         properties.map((p) => [p.latitude, p.longitude])
       );
       mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+      initialBoundsSet.current = true;
     }
-  }, [properties, activeId, onMarkerClick]);
+  }, [properties, onMarkerClick]);
 
-  // Update active marker styling
+  // Update active marker styling + bring to front
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
       const el = marker.getElement();
@@ -104,8 +125,11 @@ export default function PropertyMap({
       if (priceDiv) {
         if (id === activeId) {
           priceDiv.classList.add('active');
+          // Bring marker to front
+          el.style.zIndex = '10000';
         } else {
           priceDiv.classList.remove('active');
+          el.style.zIndex = '';
         }
       }
     });
