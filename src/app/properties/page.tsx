@@ -314,25 +314,31 @@ function PropertiesContent() {
                   href={`/properties/${property.id}`}
                   className="block card overflow-hidden"
                 >
-                  <div className="relative aspect-[16/10] bg-slate-100">
-                    <Image src={property.images[0]} alt={property.title}
-                      fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+                  <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
+                    {/* Swipeable image carousel */}
+                    <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full h-full"
+                      onClick={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onTouchMove={(e) => e.stopPropagation()}
+                    >
+                      {property.images.map((img, i) => (
+                        <div key={i} className="relative flex-shrink-0 w-full h-full snap-start">
+                          <Image src={img} alt={`${property.title} ${i + 1}`}
+                            fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+                        </div>
+                      ))}
+                    </div>
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm">
+                      className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm z-10">
                       <Heart className="w-4 h-4 text-slate-600" />
                     </button>
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute top-3 left-3 z-10">
                       <span className={`badge text-white ${
                         property.listing_type === 'sale' ? 'bg-emerald-500' :
                         property.listing_type === 'rent' ? 'bg-blue-500' :
                         property.listing_type === 'pg' ? 'bg-purple-500' : 'bg-amber-500'
                       }`}>{getListingTypeLabel(property.listing_type)}</span>
                     </div>
-                    {property.images.length > 1 && (
-                      <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-                        1 / {property.images.length}
-                      </div>
-                    )}
                   </div>
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-1">
