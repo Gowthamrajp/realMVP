@@ -1,15 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#1e3a5f",
+};
 
 export const metadata: Metadata = {
   title: "RealMVP — Find Your Dream Property in India",
   description: "Discover apartments, houses, villas, PGs, and commercial spaces across India. Free property listings, map-based search, and direct owner contact.",
   keywords: "real estate, property, buy, rent, apartment, house, villa, India, Mumbai, Bangalore, Delhi",
   manifest: "/manifest.json",
-  themeColor: "#1e3a5f",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 
 export default function RootLayout({

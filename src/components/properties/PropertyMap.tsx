@@ -46,6 +46,7 @@ export default function PropertyMap({
         mapRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update markers when properties change
@@ -92,7 +93,7 @@ export default function PropertyMap({
       );
       mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
     }
-  }, [properties, onMarkerClick]);
+  }, [properties, activeId, onMarkerClick]);
 
   // Update active marker styling
   useEffect(() => {
