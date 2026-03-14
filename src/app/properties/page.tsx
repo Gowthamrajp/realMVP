@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Map, SlidersHorizontal, X, MapPin, BedDouble, Bath, Maximize, Heart } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import PropertyCard from '@/components/properties/PropertyCard';
 import { mockProperties } from '@/data/mockProperties';
@@ -90,10 +90,9 @@ function PropertiesContent() {
     }
   }, [sheetState]);
 
-  // Sheet body touch: only trigger sheet drag when scrolled to top
+  // Sheet body touch: expand sheet on scroll up from top, collapse on scroll down from top
   const handleSheetTouchStart = useCallback((e: React.TouchEvent) => {
     const scrollEl = scrollContainerRef.current;
-    // Only capture drag if scrolled to top (or nearly top)
     if (scrollEl && scrollEl.scrollTop <= 5) {
       dragStartY.current = e.touches[0].clientY;
       dragCurrentY.current = e.touches[0].clientY;
@@ -107,11 +106,15 @@ function PropertiesContent() {
     if (!isDragging.current) return;
     dragCurrentY.current = e.touches[0].clientY;
     const diff = dragStartY.current - dragCurrentY.current;
-    // If swiping down and at top of scroll, prevent scroll and prepare to collapse
+    // If at top of scroll and swiping up → expand sheet (prevent card scroll)
+    if (diff > 10 && sheetState !== 'full') {
+      e.preventDefault();
+    }
+    // If at top of scroll and swiping down → collapse sheet
     if (diff < -10) {
       e.preventDefault();
     }
-  }, []);
+  }, [sheetState]);
 
   // Desktop marker click
   const handleMarkerClickDesktop = useCallback((id: string) => {
@@ -135,52 +138,52 @@ function PropertiesContent() {
       <Navbar />
 
       {/* Filter Bar */}
-      <div className="bg-white border-b border-slate-100 sticky top-16 z-40">
+      <div className="bg-white border-b border-black/10 sticky top-[73px] z-40">
         <div className="max-w-full mx-auto px-4 py-3">
           <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-            <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5 flex-shrink-0">
+            <div className="flex gap-0 border-2 border-black/10 flex-shrink-0">
               {LISTING_TYPES.map((lt) => (
                 <button key={lt.value}
                   onClick={() => setListingType(listingType === lt.value ? '' : lt.value)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
-                    listingType === lt.value ? 'bg-white text-primary-500 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border-r border-black/10 last:border-r-0 ${
+                    listingType === lt.value ? 'bg-black text-white' : 'text-black/40 hover:text-black'
                   }`}>{lt.label}</button>
               ))}
             </div>
             <select value={city} onChange={(e) => setCity(e.target.value)}
-              className="input-field py-1.5 text-sm w-auto min-w-[120px] flex-shrink-0">
+              className="px-3 py-2 bg-white border-2 border-black/10 text-xs font-bold uppercase tracking-wider focus:border-black outline-none flex-shrink-0">
               <option value="">All Cities</option>
               {CITIES.map((c) => (<option key={c} value={c}>{c}</option>))}
             </select>
             <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)}
-              className="input-field py-1.5 text-sm w-auto min-w-[130px] flex-shrink-0">
+              className="px-3 py-2 bg-white border-2 border-black/10 text-xs font-bold uppercase tracking-wider focus:border-black outline-none flex-shrink-0">
               <option value="">All Types</option>
               {PROPERTY_TYPES.map((pt) => (<option key={pt.value} value={pt.value}>{pt.label}</option>))}
             </select>
             <select value={bedrooms} onChange={(e) => setBedrooms(e.target.value)}
-              className="input-field py-1.5 text-sm w-auto min-w-[110px] flex-shrink-0">
+              className="px-3 py-2 bg-white border-2 border-black/10 text-xs font-bold uppercase tracking-wider focus:border-black outline-none flex-shrink-0">
               <option value="">Bedrooms</option>
               {BEDROOM_OPTIONS.map((b) => (<option key={b.value} value={b.value}>{b.label}</option>))}
             </select>
             <button onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 flex-shrink-0">
+              className="flex items-center gap-1.5 px-3 py-2 border-2 border-black/10 text-xs font-black uppercase tracking-wider hover:border-black flex-shrink-0 transition-all">
               <SlidersHorizontal className="w-3.5 h-3.5" /> Price
             </button>
             {hasFilters && (
               <button onClick={clearFilters}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-accent-500 flex-shrink-0">
+                className="flex items-center gap-1 px-3 py-2 text-xs font-black uppercase tracking-wider text-black/50 hover:text-black flex-shrink-0">
                 <X className="w-3.5 h-3.5" /> Clear
               </button>
             )}
           </div>
           {showFilters && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-              <span className="text-sm text-slate-500 flex-shrink-0">Price:</span>
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-black/10">
+              <span className="text-[10px] font-black uppercase tracking-widest text-black/40 flex-shrink-0">Price:</span>
               <input type="number" placeholder="Min ₹" value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)} className="input-field py-1.5 text-sm w-28" />
-              <span className="text-slate-400">—</span>
+                onChange={(e) => setMinPrice(e.target.value)} className="px-3 py-2 bg-white border-2 border-black/10 focus:border-black text-xs outline-none w-28" />
+              <span className="text-black/30">—</span>
               <input type="number" placeholder="Max ₹" value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)} className="input-field py-1.5 text-sm w-28" />
+                onChange={(e) => setMaxPrice(e.target.value)} className="px-3 py-2 bg-white border-2 border-black/10 focus:border-black text-xs outline-none w-28" />
             </div>
           )}
         </div>
@@ -189,13 +192,13 @@ function PropertiesContent() {
       {/* === DESKTOP: Split View (lg+) === */}
       <div className="hidden lg:flex flex-1 overflow-hidden">
         <div className="w-1/2 xl:w-[45%] overflow-y-auto h-[calc(100vh-180px)] px-4 pb-4">
-          <div className="py-2 text-sm text-slate-500">
-            <span className="font-medium text-slate-700">{filteredProperties.length}</span> properties found
+          <div className="py-2 text-xs font-black uppercase tracking-widest text-black/40">
+            <span className="text-black">{filteredProperties.length}</span> properties found
           </div>
           {filteredProperties.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-              <Map className="w-16 h-16 mb-4 opacity-50" />
-              <p className="text-lg font-medium">No properties found</p>
+            <div className="flex flex-col items-center justify-center h-64 text-black/30">
+              <span className="text-5xl mb-4">🏠</span>
+              <p className="text-lg font-black uppercase tracking-tighter">No properties found</p>
             </div>
           ) : (
             <div className="grid gap-4 grid-cols-1 xl:grid-cols-2">
@@ -227,44 +230,37 @@ function PropertiesContent() {
         {/* Popup card when marker clicked */}
         {selectedProperty && sheetState === 'collapsed' && (
           <div className="absolute top-auto bottom-[20vh] left-3 right-3 z-[50]">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden relative">
+            <div className="bg-white shadow-xl overflow-hidden relative border border-black/10">
               <Link href={`/properties/${selectedProperty.id}`} className="flex">
                 <div className="relative w-[120px] h-[120px] flex-shrink-0">
                   <Image src={selectedProperty.images[0]} alt={selectedProperty.title}
                     fill className="object-cover" sizes="120px" />
                   <div className="absolute top-2 left-2">
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full text-white ${
-                      selectedProperty.listing_type === 'sale' ? 'bg-emerald-500' :
-                      selectedProperty.listing_type === 'rent' ? 'bg-blue-500' :
-                      selectedProperty.listing_type === 'pg' ? 'bg-purple-500' : 'bg-amber-500'
-                    }`}>{getListingTypeLabel(selectedProperty.listing_type)}</span>
+                    <span className="bg-black text-white text-[8px] font-black uppercase px-2 py-0.5 tracking-widest">
+                      {getListingTypeLabel(selectedProperty.listing_type)}
+                    </span>
                   </div>
                 </div>
                 <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
                   <div>
-                    <p className="font-display font-bold text-primary-500">
+                    <p className="font-black text-lg">
                       {formatPrice(selectedProperty.price, selectedProperty.listing_type)}
                     </p>
-                    <p className="text-sm text-slate-800 font-medium line-clamp-1 mt-0.5">{selectedProperty.title}</p>
-                    <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
-                      <MapPin className="w-3 h-3" />
-                      <span className="line-clamp-1">{selectedProperty.city}</span>
-                    </div>
+                    <p className="text-xs font-black uppercase tracking-tight line-clamp-1 mt-0.5">{selectedProperty.title}</p>
+                    <p className="text-[10px] text-black/40 uppercase tracking-widest mt-1 line-clamp-1">
+                      📍 {selectedProperty.city}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                    {selectedProperty.bedrooms > 0 && (
-                      <span className="flex items-center gap-0.5"><BedDouble className="w-3 h-3" />{selectedProperty.bedrooms}</span>
-                    )}
-                    {selectedProperty.bathrooms > 0 && (
-                      <span className="flex items-center gap-0.5"><Bath className="w-3 h-3" />{selectedProperty.bathrooms}</span>
-                    )}
-                    <span className="flex items-center gap-0.5"><Maximize className="w-3 h-3" />{selectedProperty.area_sqft.toLocaleString('en-IN')}</span>
+                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase text-black/50 mt-1">
+                    {selectedProperty.bedrooms > 0 && <span>🛏 {selectedProperty.bedrooms}</span>}
+                    {selectedProperty.bathrooms > 0 && <span>🚿 {selectedProperty.bathrooms}</span>}
+                    <span>📐 {selectedProperty.area_sqft.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
               </Link>
               <button onClick={() => setSelectedProperty(null)}
-                className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-md">
-                <X className="w-4 h-4 text-slate-500" />
+                className="absolute top-2 right-2 w-6 h-6 bg-white border border-black/10 flex items-center justify-center">
+                <X className="w-3 h-3 text-black" />
               </button>
             </div>
           </div>
@@ -289,13 +285,13 @@ function PropertiesContent() {
               else setSheetState('half');
             }}
           >
-            <div className="w-10 h-1.5 bg-slate-300 rounded-full" />
+            <div className="w-10 h-1 bg-black/20 rounded-full" />
           </div>
 
           {/* Count */}
           <div className="px-4 pb-2 text-center flex-shrink-0">
-            <p className="text-sm font-medium text-slate-700">
-              {filteredProperties.length} properties
+            <p className="text-xs font-black uppercase tracking-widest text-black/40">
+              <span className="text-black">{filteredProperties.length}</span> properties
             </p>
           </div>
 
@@ -312,10 +308,9 @@ function PropertiesContent() {
                 <Link
                   key={property.id}
                   href={`/properties/${property.id}`}
-                  className="block card overflow-hidden"
+                  className="block bg-white border border-black/5 hover:shadow-xl transition-all overflow-hidden"
                 >
-                  <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
-                    {/* Swipeable image carousel */}
+                  <div className="relative aspect-[16/10] bg-zinc-200 overflow-hidden">
                     <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full h-full"
                       onClick={(e) => e.stopPropagation()}
                       onTouchStart={(e) => e.stopPropagation()}
@@ -329,32 +324,31 @@ function PropertiesContent() {
                       ))}
                     </div>
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm z-10">
-                      <Heart className="w-4 h-4 text-slate-600" />
+                      className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+                      <span className="text-sm text-black/40">♡</span>
                     </button>
                     <div className="absolute top-3 left-3 z-10">
-                      <span className={`badge text-white ${
-                        property.listing_type === 'sale' ? 'bg-emerald-500' :
-                        property.listing_type === 'rent' ? 'bg-blue-500' :
-                        property.listing_type === 'pg' ? 'bg-purple-500' : 'bg-amber-500'
-                      }`}>{getListingTypeLabel(property.listing_type)}</span>
+                      <span className="bg-black text-white text-[10px] font-black uppercase px-3 py-1 tracking-widest">
+                        {getListingTypeLabel(property.listing_type)}
+                      </span>
                     </div>
                   </div>
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-1">
-                      <h3 className="font-medium text-slate-800 line-clamp-1">{property.title}</h3>
-                      <span className="text-xs text-slate-400 flex-shrink-0 ml-2">{getPropertyTypeLabel(property.property_type)}</span>
+                      <h3 className="font-black text-sm uppercase tracking-tight line-clamp-1">{property.title}</h3>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black/40 border border-black/10 px-2 py-0.5 flex-shrink-0 ml-2">
+                        {getPropertyTypeLabel(property.property_type)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-slate-500 mb-2">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span className="line-clamp-1">{property.address}, {property.city}</span>
+                    <p className="text-[10px] text-black/40 uppercase tracking-widest mb-2">
+                      📍 {property.address}, {property.city}
+                    </p>
+                    <div className="flex items-center gap-4 text-[10px] font-bold uppercase text-black/50 mb-2">
+                      {property.bedrooms > 0 && <span className="flex items-center gap-1"><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></svg>{property.bedrooms} Bed</span>}
+                      {property.bathrooms > 0 && <span className="flex items-center gap-1"><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1zM6 12V5a2 2 0 0 1 2-2h3v2.25"/></svg>{property.bathrooms} Bath</span>}
+                      <span className="flex items-center gap-1"><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>{property.area_sqft.toLocaleString('en-IN')} sqft</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-slate-500 mb-2">
-                      {property.bedrooms > 0 && (<span className="flex items-center gap-1"><BedDouble className="w-3.5 h-3.5" />{property.bedrooms} Bed</span>)}
-                      {property.bathrooms > 0 && (<span className="flex items-center gap-1"><Bath className="w-3.5 h-3.5" />{property.bathrooms} Bath</span>)}
-                      <span className="flex items-center gap-1"><Maximize className="w-3.5 h-3.5" />{property.area_sqft.toLocaleString('en-IN')} sqft</span>
-                    </div>
-                    <p className="font-display font-bold text-lg text-primary-500">
+                    <p className="font-black text-lg">
                       {formatPrice(property.price, property.listing_type)}
                     </p>
                   </div>

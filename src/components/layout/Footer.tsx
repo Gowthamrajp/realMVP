@@ -1,71 +1,44 @@
 import Link from 'next/link';
-import { MapPin, Mail, Phone } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-primary-500 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-accent-500 rounded-lg flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-display font-bold text-xl">
-                Real<span className="text-accent-400">MVP</span>
-              </span>
+    <footer className="bg-black text-white py-20 px-6 md:px-20">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-3xl">🏛</span>
+              <h2 className="text-xl font-black uppercase tracking-tighter">RealEstateIndia</h2>
             </div>
-            <p className="text-primary-200 text-sm leading-relaxed">
-              Find your dream property across India. Free listings, map-based search, and direct owner contact.
+            <p className="text-white/50 text-xs uppercase tracking-widest leading-relaxed max-w-sm">
+              The premier destination for premium real estate in India. From heritage villas to futuristic skyscrapers, we bring you closer to your dream home.
             </p>
           </div>
-
-          {/* Quick Links */}
           <div>
-            <h3 className="font-display font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-sm text-primary-200">
-              <li><Link href="/properties?listing_type=sale" className="hover:text-white transition-colors">Buy Property</Link></li>
-              <li><Link href="/properties?listing_type=rent" className="hover:text-white transition-colors">Rent Property</Link></li>
-              <li><Link href="/properties?property_type=pg" className="hover:text-white transition-colors">PG / Co-living</Link></li>
-              <li><Link href="/properties?property_type=commercial" className="hover:text-white transition-colors">Commercial</Link></li>
-              <li><Link href="/list-property" className="hover:text-white transition-colors">List Your Property</Link></li>
+            <h4 className="font-black uppercase tracking-widest text-[10px] mb-6 text-white/40">Navigation</h4>
+            <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
+              <li><Link href="/" className="hover:text-white/70">Home</Link></li>
+              <li><Link href="/properties" className="hover:text-white/70">Listings</Link></li>
+              <li><Link href="/favorites" className="hover:text-white/70">Saved</Link></li>
+              <li><Link href="/list-property" className="hover:text-white/70">Post Property</Link></li>
             </ul>
           </div>
-
-          {/* Top Cities */}
           <div>
-            <h3 className="font-display font-semibold mb-4">Top Cities</h3>
-            <ul className="space-y-2 text-sm text-primary-200">
-              <li><Link href="/properties?city=Mumbai" className="hover:text-white transition-colors">Mumbai</Link></li>
-              <li><Link href="/properties?city=Bangalore" className="hover:text-white transition-colors">Bangalore</Link></li>
-              <li><Link href="/properties?city=Delhi" className="hover:text-white transition-colors">Delhi NCR</Link></li>
-              <li><Link href="/properties?city=Hyderabad" className="hover:text-white transition-colors">Hyderabad</Link></li>
-              <li><Link href="/properties?city=Pune" className="hover:text-white transition-colors">Pune</Link></li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="font-display font-semibold mb-4">Contact Us</h3>
-            <ul className="space-y-3 text-sm text-primary-200">
-              <li className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                <a href="mailto:hello@realmvp.in" className="hover:text-white transition-colors">hello@realmvp.in</a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <a href="tel:+919999999999" className="hover:text-white transition-colors">+91 99999 99999</a>
-              </li>
+            <h4 className="font-black uppercase tracking-widest text-[10px] mb-6 text-white/40">Connect</h4>
+            <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
+              <li><a href="#" className="hover:text-white/70">Instagram</a></li>
+              <li><a href="#" className="hover:text-white/70">LinkedIn</a></li>
+              <li><a href="#" className="hover:text-white/70">Twitter</a></li>
+              <li><a href="#" className="hover:text-white/70">Newsletter</a></li>
             </ul>
           </div>
         </div>
-
-        <div className="border-t border-primary-400/30 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-primary-300">
-          <p>© 2026 RealMVP. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
+        <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] uppercase tracking-widest text-white/30">© 2026 RealEstateIndia. All rights reserved.</p>
+          <div className="flex gap-8 text-[10px] uppercase tracking-widest text-white/30 font-bold">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Cookies</a>
           </div>
         </div>
       </div>

@@ -3,26 +3,19 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, MapPin, Home, Building2, Warehouse, Users, ArrowRight, Star, Shield, IndianRupee } from 'lucide-react';
+import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import PropertyCard from '@/components/properties/PropertyCard';
 import { mockProperties } from '@/data/mockProperties';
-import { CITIES } from '@/lib/constants';
-
-const categories = [
-  { icon: Home, label: 'Buy', desc: 'Find your dream home', listing_type: 'sale', color: 'bg-emerald-500' },
-  { icon: Building2, label: 'Rent', desc: 'Apartments & houses', listing_type: 'rent', color: 'bg-blue-500' },
-  { icon: Users, label: 'PG', desc: 'Shared living spaces', listing_type: 'pg', color: 'bg-purple-500' },
-  { icon: Warehouse, label: 'Commercial', desc: 'Office & retail', property_type: 'commercial', color: 'bg-amber-500' },
-];
+import { formatPrice } from '@/lib/utils';
 
 export default function HomePage() {
   const router = useRouter();
-  const [searchCity, setSearchCity] = useState('');
+  const [searchCity] = useState('');
   const [searchType, setSearchType] = useState('sale');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const featuredProperties = mockProperties.slice(0, 6);
+  const featuredProperties = mockProperties.slice(0, 3);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -32,208 +25,182 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#f7f7f7] text-black font-sans">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800 overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-accent-500 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl" />
-        </div>
+      <section className="relative min-h-[80vh] flex items-center justify-center bg-white overflow-hidden border-b border-black/5">
+        {/* Dot pattern background */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '30px 30px' }}
+        />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
-          <div className="text-center mb-10">
-            <h1 className="font-display text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
-              Find Your Perfect
-              <br />
-              <span className="text-accent-400">Property</span> in India
-            </h1>
-            <p className="text-primary-200 text-lg md:text-xl max-w-2xl mx-auto">
-              Explore thousands of apartments, houses, villas, and more across India.
-              Free listings, no hidden charges.
-            </p>
-          </div>
+        <div className="relative z-10 w-full max-w-5xl px-6 flex flex-col items-center text-center">
+          <h1 className="text-5xl md:text-8xl font-black leading-tight tracking-tighter text-black mb-8 uppercase">
+            Find Your Perfect<br />Property in India
+          </h1>
 
-          {/* Search Bar */}
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-2xl p-3 md:p-4">
-              {/* Listing type tabs */}
-              <div className="flex gap-1 mb-3 bg-slate-100 rounded-xl p-1">
-                {['sale', 'rent', 'pg'].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setSearchType(type)}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                      searchType === type
-                        ? 'bg-white text-primary-500 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    {type === 'sale' ? 'Buy' : type === 'rent' ? 'Rent' : 'PG'}
-                  </button>
-                ))}
-              </div>
-
-              {/* Search inputs */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <select
-                    value={searchCity}
-                    onChange={(e) => setSearchCity(e.target.value)}
-                    className="input-field pl-10 appearance-none cursor-pointer"
-                  >
-                    <option value="">All Cities</option>
-                    {CITIES.map((city) => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </select>
-                </div>
+          {/* Search Box */}
+          <div className="w-full max-w-3xl bg-white border-2 border-black p-2">
+            {/* Tabs */}
+            <div className="flex border-b border-black/10 mb-2">
+              {['sale', 'rent', 'pg', 'commercial'].map((type) => (
                 <button
-                  onClick={handleSearch}
-                  className="btn-accent flex items-center justify-center gap-2 sm:px-8"
+                  key={type}
+                  onClick={() => setSearchType(type)}
+                  className={`px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${
+                    searchType === type
+                      ? 'border-black text-black'
+                      : 'border-transparent text-black/40 hover:text-black/60'
+                  }`}
                 >
-                  <Search className="w-5 h-5" />
-                  <span>Search</span>
+                  {type === 'sale' ? 'Buy' : type === 'rent' ? 'Rent' : type === 'pg' ? 'PG' : 'Commercial'}
                 </button>
-              </div>
+              ))}
             </div>
 
-            {/* Quick stats */}
-            <div className="flex justify-center gap-8 mt-8 text-white/80 text-sm">
-              <div className="text-center">
-                <div className="font-display font-bold text-2xl text-white">500+</div>
-                <div>Properties</div>
+            {/* Search Input */}
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex-1 relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-black/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-[#f7f7f7] border-none focus:ring-1 focus:ring-black text-sm uppercase tracking-tight placeholder:text-black/30 outline-none"
+                  placeholder="Search by city, locality, or project"
+                />
               </div>
-              <div className="text-center">
-                <div className="font-display font-bold text-2xl text-white">15+</div>
-                <div>Cities</div>
-              </div>
-              <div className="text-center">
-                <div className="font-display font-bold text-2xl text-white">100%</div>
-                <div>Free</div>
-              </div>
+              <button
+                onClick={handleSearch}
+                className="bg-black text-white px-10 py-4 font-black uppercase tracking-widest text-sm hover:bg-black/80 transition-all"
+              >
+                Search
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Category Cards */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="text-center mb-10">
-          <h2 className="font-display text-3xl font-bold text-primary-500 mb-3">
-            What are you looking for?
-          </h2>
-          <p className="text-slate-500">Explore properties by category</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {categories.map((cat) => (
-            <Link
-              key={cat.label}
-              href={`/properties?${cat.listing_type ? `listing_type=${cat.listing_type}` : `property_type=${cat.property_type}`}`}
-              className="card group p-6 text-center hover:-translate-y-1"
-            >
-              <div className={`w-14 h-14 ${cat.color} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                <cat.icon className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="font-display font-semibold text-lg text-slate-800 mb-1">{cat.label}</h3>
-              <p className="text-sm text-slate-500">{cat.desc}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Explore on Map CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-        <Link
-          href="/properties"
-          className="block bg-gradient-to-r from-primary-500 to-primary-700 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden group"
-        >
-          <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/map/1200/400')] opacity-10 bg-cover bg-center" />
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+      {/* Featured Properties */}
+      <section className="py-20 px-6 md:px-20 bg-[#f7f7f7]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-end mb-12">
             <div>
-              <h2 className="font-display text-2xl md:text-3xl font-bold mb-2">
-                🗺️ Explore on Map
-              </h2>
-              <p className="text-primary-200 max-w-lg">
-                Find properties near you with our interactive map. See prices, locations, and details at a glance — just like Airbnb.
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/40 mb-2">Curated selection</p>
+              <h2 className="text-4xl font-black uppercase tracking-tighter">Featured Properties</h2>
             </div>
-            <div className="flex items-center gap-2 btn-accent whitespace-nowrap group-hover:scale-105 transition-transform">
-              Open Map View
-              <ArrowRight className="w-5 h-5" />
-            </div>
-          </div>
-        </Link>
-      </section>
-
-      {/* Featured Listings */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="font-display text-3xl font-bold text-primary-500 mb-2">
-              Featured Properties
-            </h2>
-            <p className="text-slate-500">Handpicked properties for you</p>
-          </div>
-          <Link
-            href="/properties"
-            className="hidden md:flex items-center gap-2 text-accent-500 font-medium hover:text-accent-600 transition-colors"
-          >
-            View All
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-        </div>
-
-        <div className="mt-8 text-center md:hidden">
-          <Link href="/properties" className="btn-outline inline-flex items-center gap-2">
-            View All Properties
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl font-bold text-primary-500 mb-3">
-              Why Choose RealMVP?
-            </h2>
-            <p className="text-slate-500">We believe finding a home should be simple and free</p>
+            <Link href="/properties" className="text-sm font-bold border-b-2 border-black pb-1 hover:text-black/70 transition-colors">
+              View All Properties
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <IndianRupee className="w-8 h-8 text-emerald-500" />
+            {featuredProperties.map((property) => (
+              <Link
+                key={property.id}
+                href={`/properties/${property.id}`}
+                className="bg-white border border-black/5 hover:shadow-2xl transition-all group block"
+              >
+                <div className="aspect-[4/3] bg-zinc-200 relative overflow-hidden">
+                  <Image
+                    src={property.images[0]}
+                    alt={property.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                  <div className="absolute top-4 left-4 bg-black text-white text-[10px] font-black uppercase px-3 py-1 tracking-widest">
+                    {property.listing_type === 'sale' ? 'For Sale' :
+                     property.listing_type === 'rent' ? 'For Rent' :
+                     property.listing_type === 'pg' ? 'PG' : 'For Lease'}
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-black text-xl uppercase tracking-tight">{property.title}</h3>
+                      <p className="text-xs text-black/40 uppercase tracking-widest flex items-center gap-1.5 mt-1">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {property.city}, {property.state}
+                      </p>
+                    </div>
+                    <p className="font-black text-xl">{formatPrice(property.price, property.listing_type)}</p>
+                  </div>
+                  <div className="flex border-t border-black/5 pt-4 gap-6">
+                    {property.bedrooms > 0 && (
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></svg>
+                        <span className="text-xs font-bold uppercase">{property.bedrooms} Bed</span>
+                      </div>
+                    )}
+                    {property.bathrooms > 0 && (
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1zM6 12V5a2 2 0 0 1 2-2h3v2.25"/></svg>
+                        <span className="text-xs font-bold uppercase">{property.bathrooms} Bath</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>
+                      <span className="text-xs font-bold uppercase">{property.area_sqft.toLocaleString('en-IN')} sqft</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Section */}
+      <section className="py-24 bg-white px-6 md:px-20 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/40 mb-4">Our Commitment</p>
+            <h2 className="text-5xl font-black uppercase tracking-tighter mb-8 leading-[0.9]">
+              We Redefine The<br />Property Search<br />Experience
+            </h2>
+            <p className="text-black/60 mb-10 max-w-md">
+              No clutter, no noise. Just the best properties in India presented with absolute clarity and precision.
+            </p>
+
+            <div className="space-y-8">
+              <div className="flex gap-6">
+                <svg className="w-8 h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <div>
+                  <h4 className="font-black uppercase tracking-widest text-sm mb-1">Verified Only</h4>
+                  <p className="text-xs text-black/40 uppercase tracking-wider">Every listing goes through a rigorous quality check.</p>
+                </div>
               </div>
-              <h3 className="font-display font-semibold text-lg mb-2">100% Free</h3>
-              <p className="text-slate-500 text-sm">No hidden charges, no premium plans needed. All features are free for everyone.</p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-blue-500" />
+              <div className="flex gap-6">
+                <svg className="w-8 h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div>
+                  <h4 className="font-black uppercase tracking-widest text-sm mb-1">Zero Brokerage</h4>
+                  <p className="text-xs text-black/40 uppercase tracking-wider">Direct deals with owners on selected premium projects.</p>
+                </div>
               </div>
-              <h3 className="font-display font-semibold text-lg mb-2">Verified Listings</h3>
-              <p className="text-slate-500 text-sm">Every property is verified to ensure you get genuine listings and reliable information.</p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-amber-500" />
+              <div className="flex gap-6">
+                <svg className="w-8 h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <div>
+                  <h4 className="font-black uppercase tracking-widest text-sm mb-1">Instant Tours</h4>
+                  <p className="text-xs text-black/40 uppercase tracking-wider">Book physical or virtual tours in under 60 seconds.</p>
+                </div>
               </div>
-              <h3 className="font-display font-semibold text-lg mb-2">Direct Contact</h3>
-              <p className="text-slate-500 text-sm">Connect directly with owners — no middlemen, no brokerage fees required.</p>
             </div>
+          </div>
+
+          <div className="relative">
+            <div className="bg-black aspect-square w-full absolute -top-10 -right-10 opacity-5" />
+            <Image
+              src="https://picsum.photos/seed/arch/800/800"
+              alt="Modern Architecture"
+              width={800}
+              height={800}
+              className="relative z-10 w-full h-full object-cover border border-black grayscale hover:grayscale-0 transition-all duration-700"
+            />
           </div>
         </div>
       </section>
