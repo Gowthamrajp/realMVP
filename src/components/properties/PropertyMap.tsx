@@ -28,6 +28,7 @@ export default function PropertyMap({
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const streetLayerRef = useRef<L.TileLayer | null>(null);
   const satelliteLayerRef = useRef<L.TileLayer | null>(null);
+  const labelsLayerRef = useRef<L.TileLayer | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
 
   // Invalidate map size and re-fit bounds when visibility changes
@@ -55,16 +56,25 @@ export default function PropertyMap({
       scrollWheelZoom: true,
     });
 
-    // Street layer (default)
-    streetLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
+    // Street layer — CartoDB Voyager (Google Maps-like with colored water, roads, railways)
+    streetLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 20,
+      subdomains: 'abcd',
     }).addTo(mapRef.current);
 
     // Satellite layer (ESRI World Imagery — free, no API key)
     satelliteLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri, Maxar, Earthstar Geographics',
       maxZoom: 19,
+    });
+
+    // Labels overlay for satellite — Voyager labels (roads, areas, water, railways)
+    labelsLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 20,
+      subdomains: 'abcd',
+      pane: 'overlayPane',
     });
 
     return () => {
@@ -76,15 +86,17 @@ export default function PropertyMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Toggle between street and satellite
+  // Toggle between street and satellite (with labels overlay)
   useEffect(() => {
-    if (!mapRef.current || !streetLayerRef.current || !satelliteLayerRef.current) return;
+    if (!mapRef.current || !streetLayerRef.current || !satelliteLayerRef.current || !labelsLayerRef.current) return;
 
     if (isSatellite) {
       mapRef.current.removeLayer(streetLayerRef.current);
       mapRef.current.addLayer(satelliteLayerRef.current);
+      mapRef.current.addLayer(labelsLayerRef.current); // Add road/area labels on top
     } else {
       mapRef.current.removeLayer(satelliteLayerRef.current);
+      mapRef.current.removeLayer(labelsLayerRef.current);
       mapRef.current.addLayer(streetLayerRef.current);
     }
   }, [isSatellite]);

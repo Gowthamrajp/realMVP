@@ -34,3 +34,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+satellite-toggle-test.png
+satellite-view-with-labels.png
