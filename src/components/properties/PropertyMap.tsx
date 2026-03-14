@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Property } from '@/types';
@@ -26,13 +26,15 @@ export default function PropertyMap({
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const streetLayerRef = useRef<L.TileLayer | null>(null);
+  const satelliteLayerRef = useRef<L.TileLayer | null>(null);
+  const [isSatellite, setIsSatellite] = useState(false);
 
   // Invalidate map size and re-fit bounds when visibility changes
   useEffect(() => {
     if (visible && mapRef.current) {
       setTimeout(() => {
         mapRef.current?.invalidateSize();
-        // Re-fit bounds to show all markers properly
         if (properties.length > 0) {
           const bounds = L.latLngBounds(
             properties.map((p) => [p.latitude, p.longitude])
@@ -53,10 +55,17 @@ export default function PropertyMap({
       scrollWheelZoom: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Street layer (default)
+    streetLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
     }).addTo(mapRef.current);
+
+    // Satellite layer (ESRI World Imagery — free, no API key)
+    satelliteLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+      maxZoom: 19,
+    });
 
     return () => {
       if (mapRef.current) {
@@ -67,18 +76,29 @@ export default function PropertyMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Toggle between street and satellite
+  useEffect(() => {
+    if (!mapRef.current || !streetLayerRef.current || !satelliteLayerRef.current) return;
+
+    if (isSatellite) {
+      mapRef.current.removeLayer(streetLayerRef.current);
+      mapRef.current.addLayer(satelliteLayerRef.current);
+    } else {
+      mapRef.current.removeLayer(satelliteLayerRef.current);
+      mapRef.current.addLayer(streetLayerRef.current);
+    }
+  }, [isSatellite]);
+
   // Track if initial bounds have been set
   const initialBoundsSet = useRef(false);
 
-  // Create/update markers when properties change (NOT on activeId change)
+  // Create/update markers when properties change
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Clear existing markers
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
 
-    // Add new markers
     properties.forEach((property) => {
       const priceText = formatPrice(property.price, property.listing_type);
 
@@ -96,7 +116,6 @@ export default function PropertyMap({
         onMarkerClick?.(property.id);
       });
 
-      // Tooltip on hover
       marker.bindTooltip(
         `<div style="font-weight:600;font-size:13px;margin-bottom:2px;">${property.title}</div>
          <div style="color:#64748b;font-size:11px;">${property.address}, ${property.city}</div>`,
@@ -106,7 +125,6 @@ export default function PropertyMap({
       markersRef.current.set(property.id, marker);
     });
 
-    // Only fit bounds on first load or when properties list changes
     if (properties.length > 0 && !initialBoundsSet.current) {
       const bounds = L.latLngBounds(
         properties.map((p) => [p.latitude, p.longitude])
@@ -125,7 +143,6 @@ export default function PropertyMap({
       if (priceDiv) {
         if (id === activeId) {
           priceDiv.classList.add('active');
-          // Bring marker to front
           el.style.zIndex = '10000';
         } else {
           priceDiv.classList.remove('active');
@@ -136,6 +153,18 @@ export default function PropertyMap({
   }, [activeId]);
 
   return (
-    <div ref={mapContainerRef} className="w-full h-full rounded-2xl overflow-hidden" />
+    <div className="relative w-full h-full rounded-2xl overflow-hidden">
+      <div ref={mapContainerRef} className="w-full h-full" />
+
+      {/* Map type toggle button */}
+      <button
+        onClick={() => setIsSatellite(!isSatellite)}
+        className="map-toggle-btn"
+        title={isSatellite ? 'Switch to Street View' : 'Switch to Satellite View'}
+      >
+        <span className="map-toggle-icon">{isSatellite ? '🗺️' : '🛰️'}</span>
+        <span className="map-toggle-label">{isSatellite ? 'Map' : 'Satellite'}</span>
+      </button>
+    </div>
   );
 }
