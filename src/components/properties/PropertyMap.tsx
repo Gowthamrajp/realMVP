@@ -56,11 +56,10 @@ export default function PropertyMap({
       scrollWheelZoom: true,
     });
 
-    // Street layer — CartoDB Voyager (Google Maps-like with colored water, roads, railways)
-    streetLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      maxZoom: 20,
-      subdomains: 'abcd',
+    // Street layer — OpenStreetMap (original)
+    streetLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
     }).addTo(mapRef.current);
 
     // Satellite layer (ESRI World Imagery — free, no API key)
