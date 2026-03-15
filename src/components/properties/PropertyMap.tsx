@@ -29,6 +29,7 @@ export default function PropertyMap({
   const streetLayerRef = useRef<L.TileLayer | null>(null);
   const satelliteLayerRef = useRef<L.TileLayer | null>(null);
   const labelsLayerRef = useRef<L.TileLayer | null>(null);
+  const roadsLayerRef = useRef<L.TileLayer | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
 
   // Invalidate map size and re-fit bounds when visibility changes
@@ -36,9 +37,10 @@ export default function PropertyMap({
     if (visible && mapRef.current) {
       setTimeout(() => {
         mapRef.current?.invalidateSize();
-        if (properties.length > 0) {
+        const valid = properties.filter((p) => p.latitude != null && p.longitude != null);
+        if (valid.length > 0) {
           const bounds = L.latLngBounds(
-            properties.map((p) => [p.latitude, p.longitude])
+            valid.map((p) => [p.latitude, p.longitude])
           );
           mapRef.current?.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
         }
@@ -68,11 +70,17 @@ export default function PropertyMap({
       maxZoom: 19,
     });
 
-    // Labels overlay for satellite — Voyager labels (roads, areas, water, railways)
-    labelsLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    // Labels overlay — Esri World Boundaries and Places (locality names, city names, boundaries)
+    labelsLayerRef.current = L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri',
       maxZoom: 20,
-      subdomains: 'abcd',
+      pane: 'overlayPane',
+    });
+
+    // Roads overlay — Esri World Transportation (road networks, street names)
+    roadsLayerRef.current = L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '',
+      maxZoom: 20,
       pane: 'overlayPane',
     });
 
@@ -87,15 +95,17 @@ export default function PropertyMap({
 
   // Toggle between street and satellite (with labels overlay)
   useEffect(() => {
-    if (!mapRef.current || !streetLayerRef.current || !satelliteLayerRef.current || !labelsLayerRef.current) return;
+    if (!mapRef.current || !streetLayerRef.current || !satelliteLayerRef.current || !labelsLayerRef.current || !roadsLayerRef.current) return;
 
     if (isSatellite) {
       mapRef.current.removeLayer(streetLayerRef.current);
       mapRef.current.addLayer(satelliteLayerRef.current);
-      mapRef.current.addLayer(labelsLayerRef.current); // Add road/area labels on top
+      mapRef.current.addLayer(roadsLayerRef.current);  // Roads layer first
+      mapRef.current.addLayer(labelsLayerRef.current);  // Labels on top
     } else {
       mapRef.current.removeLayer(satelliteLayerRef.current);
       mapRef.current.removeLayer(labelsLayerRef.current);
+      mapRef.current.removeLayer(roadsLayerRef.current);
       mapRef.current.addLayer(streetLayerRef.current);
     }
   }, [isSatellite]);
@@ -110,7 +120,9 @@ export default function PropertyMap({
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
 
-    properties.forEach((property) => {
+    const validProperties = properties.filter((p) => p.latitude != null && p.longitude != null);
+
+    validProperties.forEach((property) => {
       const priceText = formatPrice(property.price, property.listing_type);
 
       const icon = L.divIcon({
@@ -136,9 +148,9 @@ export default function PropertyMap({
       markersRef.current.set(property.id, marker);
     });
 
-    if (properties.length > 0 && !initialBoundsSet.current) {
+    if (validProperties.length > 0 && !initialBoundsSet.current) {
       const bounds = L.latLngBounds(
-        properties.map((p) => [p.latitude, p.longitude])
+        validProperties.map((p) => [p.latitude, p.longitude])
       );
       mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
       initialBoundsSet.current = true;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,13 +8,18 @@ import dynamic from 'next/dynamic';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { mockProperties } from '@/data/mockProperties';
+import { createClient } from '@/lib/supabase/client';
+import { Property } from '@/types';
 import { formatPriceDetailed, getListingTypeLabel, getPropertyTypeLabel, formatArea, timeAgo } from '@/lib/utils';
 
 const PropertyMap = dynamic(() => import('@/components/properties/PropertyMap'), { ssr: false });
 
 export default function PropertyDetailPage() {
   const params = useParams();
-  const property = mockProperties.find((p) => p.id === params.id);
+  const [property, setProperty] = useState<Property | null | undefined>(
+    mockProperties.find((p) => p.id === params.id) || undefined
+  );
+  const [loading, setLoading] = useState(!property);
 
   const [currentImg, setCurrentImg] = useState(0);
   const [showGallery, setShowGallery] = useState(false);
@@ -22,12 +27,37 @@ export default function PropertyDetailPage() {
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [inquiryPhone, setInquiryPhone] = useState('');
 
+  useEffect(() => {
+    if (property) return; // found in mock
+    const supabase = createClient();
+    supabase
+      .from('properties')
+      .select('*')
+      .eq('id', params.id)
+      .single()
+      .then(({ data }) => {
+        setProperty((data as Property) || null);
+        setLoading(false);
+      });
+  }, [params.id, property]);
+
   const similarProperties = useMemo(() => {
     if (!property) return [];
     return mockProperties
       .filter((p) => p.id !== property.id && (p.city === property.city || p.listing_type === property.listing_type))
       .slice(0, 3);
   }, [property]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f7f7f7] text-black">
+        <Navbar />
+        <div className="flex items-center justify-center h-[60vh]">
+          <p className="text-sm font-black uppercase tracking-widest text-black/40 animate-pulse">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!property) {
     return (
@@ -58,9 +88,13 @@ export default function PropertyDetailPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-20 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1 overflow-hidden">
           <div className="relative aspect-[4/3] md:aspect-auto md:row-span-2 cursor-pointer group bg-zinc-200"
-            onClick={() => setShowGallery(true)}>
-            <Image src={property.images[0]} alt={property.title} fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500" priority />
+            onClick={() => property.images.length > 0 && setShowGallery(true)}>
+            {property.images.length > 0 ? (
+              <Image src={property.images[0]} alt={property.title} fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500" priority />
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[300px] text-black/20 text-6xl">🏠</div>
+            )}
           </div>
           {property.images.slice(1, 3).map((img, i) => (
             <div key={i} className="relative aspect-[4/3] hidden md:block cursor-pointer group bg-zinc-200"
@@ -77,7 +111,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Fullscreen Gallery */}
-      {showGallery && (
+      {showGallery && property.images.length > 0 && (
         <div className="fixed inset-0 bg-black z-[100] flex items-center justify-center">
           <button onClick={() => setShowGallery(false)} className="absolute top-4 right-4 text-white text-2xl font-black">✕</button>
           <button onClick={() => setCurrentImg((currentImg - 1 + property.images.length) % property.images.length)}
@@ -180,13 +214,15 @@ export default function PropertyDetailPage() {
             )}
 
             {/* Map */}
-            <div>
-              <h2 className="text-xl font-black uppercase tracking-tight mb-4">Location</h2>
-              <div className="h-[300px] overflow-hidden">
-                <PropertyMap properties={[property]} activeId={property.id}
-                  center={[property.latitude, property.longitude]} zoom={14} />
+            {property.latitude && property.longitude && (
+              <div>
+                <h2 className="text-xl font-black uppercase tracking-tight mb-4">Location</h2>
+                <div className="h-[300px] overflow-hidden">
+                  <PropertyMap properties={[property]} activeId={property.id}
+                    center={[property.latitude, property.longitude]} zoom={14} />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right — Contact */}
@@ -194,7 +230,7 @@ export default function PropertyDetailPage() {
             <div className="bg-white border border-black/5 p-6 sticky top-24 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-black text-lg">
-                  {property.owner_id.charAt(property.owner_id.length - 1).toUpperCase()}
+                  {property.owner_id ? property.owner_id.charAt(property.owner_id.length - 1).toUpperCase() : 'O'}
                 </div>
                 <div>
                   <div className="font-black uppercase tracking-tight">Property Owner</div>

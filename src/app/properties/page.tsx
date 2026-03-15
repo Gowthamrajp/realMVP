@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, Suspense } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import { SlidersHorizontal, X } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import PropertyCard from '@/components/properties/PropertyCard';
 import { mockProperties } from '@/data/mockProperties';
+import { createClient } from '@/lib/supabase/client';
 import { CITIES, PROPERTY_TYPES, LISTING_TYPES, BEDROOM_OPTIONS } from '@/lib/constants';
 import { Property } from '@/types';
 import { formatPrice, getListingTypeLabel, getPropertyTypeLabel } from '@/lib/utils';
@@ -17,6 +18,23 @@ const PropertyMap = dynamic(() => import('@/components/properties/PropertyMap'),
 
 function PropertiesContent() {
   const searchParams = useSearchParams();
+  const [allProperties, setAllProperties] = useState<Property[]>(mockProperties);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('properties')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const supabaseIds = new Set(data.map((p: Property) => p.id));
+          const uniqueMock = mockProperties.filter(p => !supabaseIds.has(p.id));
+          setAllProperties([...data as Property[], ...uniqueMock]);
+        }
+      });
+  }, []);
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -38,7 +56,7 @@ function PropertiesContent() {
   const [maxPrice, setMaxPrice] = useState('');
 
   const filteredProperties = useMemo(() => {
-    return mockProperties.filter((p: Property) => {
+    return allProperties.filter((p: Property) => {
       if (city && p.city !== city) return false;
       if (listingType && p.listing_type !== listingType) return false;
       if (propertyType && p.property_type !== propertyType) return false;
@@ -47,7 +65,7 @@ function PropertiesContent() {
       if (maxPrice && p.price > parseInt(maxPrice)) return false;
       return true;
     });
-  }, [city, listingType, propertyType, bedrooms, minPrice, maxPrice]);
+  }, [allProperties, city, listingType, propertyType, bedrooms, minPrice, maxPrice]);
 
   const clearFilters = () => {
     setCity(''); setListingType(''); setPropertyType('');

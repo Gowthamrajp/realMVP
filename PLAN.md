@@ -507,9 +507,12 @@ Mock data will be replaced with real user-submitted data as the platform grows.
 | PWA & Polish | ✅ Complete | Manifest, icons configured |
 | Deployment | ✅ Live | Vercel + GitHub CI/CD |
 | Design Migration | ✅ Complete | B&W brutalist from Google Stitch |
-| Satellite Map | ✅ Complete | ESRI + CARTO labels, toggleable |
+| Satellite Map | ✅ Complete | ESRI imagery + dual overlay (labels + roads) |
 | Map Tiles | ✅ Complete | OpenStreetMap street + ESRI satellite |
 | Mobile Bottom Nav | ✅ Complete | SVG icons, active states |
+| Supabase Form Submit | ✅ Complete | List property → uploads photos → inserts row → redirects |
+| Live Data Fetch | ✅ Complete | Properties page + detail page read from Supabase + mock fallback |
+| Null Safety | ✅ Complete | Handles null lat/lng, owner_id, empty images on detail page |
 
 ### Live URLs
 - **Website**: https://real-mvp-ten.vercel.app
@@ -518,5 +521,66 @@ Mock data will be replaced with real user-submitted data as the platform grows.
 
 ---
 
+## 🗺 Map Implementation Details
+
+### Layers (PropertyMap.tsx)
+The map uses **Leaflet.js** with a toggle between Street and Satellite views:
+
+**Street Mode (default):**
+- OpenStreetMap tiles (`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`)
+
+**Satellite Mode (toggle):**
+Three layers stacked together for a Google Maps-like satellite experience:
+1. **Esri World Imagery** (base satellite tiles)
+   `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`
+2. **Esri World Transportation** (roads overlay)
+   `https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`
+3. **Esri World Boundaries and Places** (locality names, city names, boundaries)
+   `https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`
+
+All layers are free (no API key), served via Esri ArcGIS Online.
+
+### Map Features
+- Custom price markers (₹25L, ₹15K/mo pill badges)
+- Click marker ↔ highlight card interaction
+- Null coordinate filtering (Supabase properties without lat/lng are excluded from map)
+- Mobile: full-screen map with draggable bottom sheet
+- Desktop: split view (cards left, map right)
+
+---
+
+## 🔌 Supabase Integration
+
+### List Property Form (`/list-property`)
+- 3-step form: Basic Info → Location/Amenities → Photos
+- All inputs wired to React state via `updateForm()` helper
+- On submit:
+  1. Uploads photos to `property-images` storage bucket (unique filenames)
+  2. Gets public URLs for each uploaded image
+  3. Inserts property row into `properties` table
+  4. Redirects to `/properties/{new-id}` on success
+  5. Shows toast error on failure
+- Submit button shows "Publishing..." disabled state during submission
+- Anonymous INSERT policy on properties table (no auth required for MVP)
+
+### Properties Listing (`/properties`)
+- Fetches from Supabase on mount via `useEffect`
+- Merges Supabase results (newest first) with mock data (deduped by ID)
+- Falls back to mock data if Supabase returns empty
+
+### Property Detail (`/properties/[id]`)
+- First checks mock data by ID
+- If not found, fetches from Supabase by UUID
+- Shows loading state while fetching
+- Handles null safety: owner_id, latitude/longitude, empty images array
+- Map section only renders when coordinates exist
+
+### Storage
+- Bucket: `property-images` (public, INSERT policy)
+- Files uploaded with unique names: `{timestamp}-{random}.{ext}`
+- Public URLs used in `images` TEXT[] column
+
+---
+
 *Last Updated: March 15, 2026*
-*Version: 0.2.0-design-migration*
+*Version: 0.3.0-supabase-integration*
